@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-manger-front
+  namespace: redis-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-manger-front
+  template:
+    metadata:
+      labels:
+        app: redis-manger-front
+    spec:
+      nodeName: k8s-node1
+      containers:
+        - name: myapi
+          image: registry.cn-hangzhou.aliyuncs.com/k8s-aa/redis_manger_front:v1
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: ali
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-manger-front-svc
+  namespace: redis-system
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: redis-manger-front
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: redis-manger-front-ingress
+  namespace: redis-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: redis.study-k8s.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: redis-manger-front-svc
+            port:
+              number: 80
